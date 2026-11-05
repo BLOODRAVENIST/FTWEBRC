@@ -1,0 +1,4 @@
+ftwebrc
+*.o
+results/
+.DS_Store

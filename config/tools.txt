@@ -1,0 +1,98 @@
+# Format: name|command|timeout|phase
+# ─── SUBDOMAIN ENUMERATION ───
+subfinder|subfinder -d <domain> -all -silent|180|subdomain
+assetfinder|assetfinder --subs-only <domain>|120|subdomain
+findomain|findomain -t <domain> -q|120|subdomain
+crtsh|curl -s "https://crt.sh/?q=%25.<domain>&output=json"|60|subdomain
+chaos|chaos -d <domain> -silent|120|subdomain
+amass_passive|amass enum -passive -d <domain> -timeout 3|240|subdomain
+sublist3r|python3 /opt/Sublist3r/sublist3r.py -d <domain> -o /dev/stdout 2>/dev/null|180|subdomain
+knockpy|knockpy <domain> --no-http|180|subdomain
+dnsx|dnsx -d <domain> -a -resp -silent|180|subdomain
+shuffledns|shuffledns -d <domain> -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -r /usr/share/seclists/Discovery/DNS/resolvers.txt -silent 2>/dev/null|300|subdomain
+puredns|puredns bruteforce /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt <domain> -q 2>/dev/null|300|subdomain
+# ─── PROBING ───
+httpx_probe|httpx -l <subdomains_file> -silent -title -tech-detect -status-code -mc 200,301,302,403|300|probe
+httprobe|cat <subdomains_file> | httprobe -c 50|180|probe
+# ─── TECHNOLOGY ───
+whatweb|whatweb -a 3 <url>|120|tech
+wafw00f|wafw00f <url>|60|tech
+webanalyze|webanalyze -host <domain> -crawl 2|180|tech
+# ─── URL COLLECTION ───
+gau|gau <domain> --threads 5 2>/dev/null|180|urls
+waybackurls|waybackurls <domain> 2>/dev/null|180|urls
+waymore|waymore -i <domain> -mode U -oU /dev/stdout 2>/dev/null|180|urls
+uro|cat <urls_file> | uro 2>/dev/null|60|urls
+# ─── CRAWLING ───
+katana|katana -u <url> -silent -d 3 -jc 2>/dev/null|300|crawl
+gospider|gospider -s <url> -d 3 -c 10 --quiet 2>/dev/null|300|crawl
+hakrawler|echo <url> | hakrawler -d 2 2>/dev/null|180|crawl
+# ─── CONTENT DISCOVERY ───
+gobuster_dir|gobuster dir -u <url> -w /usr/share/seclists/Discovery/Web-Content/common.txt -t 30 -q 2>/dev/null|600|content
+ffuf_dir|ffuf -u <url>/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -mc 200,301,302,403 -t 30 -s 2>/dev/null|600|content
+feroxbuster|feroxbuster -u <url> -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -t 30 -q 2>/dev/null|600|content
+dirsearch|dirsearch -u <url> -e php,html,js,json,txt,bak --exclude-status 404 -q 2>/dev/null|600|content
+dirb|dirb <url> /usr/share/wordlists/dirb/common.txt -S 2>/dev/null|600|content
+# ─── PARAMETER DISCOVERY ───
+arjun|arjun -u <url> -oT /dev/stdout 2>/dev/null|300|params
+paramspider|paramspider -d <domain> 2>/dev/null|300|params
+parameth|python3 /opt/Parameth/parameth.py -u <url> 2>/dev/null|300|params
+x8|x8 -u <url> -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -o /dev/stdout 2>/dev/null|300|params
+# ─── VULN SCAN ───
+nuclei_safe|nuclei -u <url> -severity info,low,medium -silent 2>/dev/null|600|vuln
+nikto|nikto -h <url> -Tuning 123456789 2>/dev/null|600|vuln
+nmap_http|nmap --script http-enum,http-headers,http-methods,http-title -p 80,443 <domain> 2>/dev/null|300|vuln
+# ─── XSS ───
+dalfox|dalfox url <url> --silence 2>/dev/null|600|xss
+xsstrike|python3 /opt/XSStrike/xsstrike.py -u <url> --crawl 2>/dev/null|600|xss
+# ─── SQLI ───
+sqlmap|sqlmap -u <url> --batch --crawl=2 --forms --level=2 --risk=1 2>/dev/null|900|sqli
+ghauri|ghauri -u <url> --batch 2>/dev/null|600|sqli
+# ─── CMDI ───
+commix|commix --url=<url> --batch 2>/dev/null|600|cmdi
+# ─── CORS ───
+corsy|python3 /opt/Corsy/corsy.py -u <url> 2>/dev/null|180|cors
+# ─── CRLF ───
+crlfuzz|crlfuzz -u <url> -s 2>/dev/null|180|crlf
+# ─── REDIRECT ───
+openredirex|python3 /opt/OpenRedireX/openredirex.py -u <url> -k 2>/dev/null|300|redirect
+# ─── TAKEOVER ───
+subjack|subjack -w <subdomains_file> -t 100 -ssl -timeout 30 -o /dev/stdout 2>/dev/null|300|takeover
+subzy|subzy run --targets <subdomains_file> --hide_fails 2>/dev/null|300|takeover
+nuclei_takeover|nuclei -l <subdomains_file> -t http/takeovers/ -silent 2>/dev/null|300|takeover
+# ─── NUCLEI TAGS ───
+nuclei_exposure|nuclei -u <url> -t exposures/ -silent 2>/dev/null|600|exposure
+nuclei_misconfig|nuclei -u <url> -t misconfiguration/ -silent 2>/dev/null|600|misconfig
+nuclei_cves|nuclei -u <url> -t cves/ -severity critical,high -silent 2>/dev/null|900|cves
+# ─── GF PATTERNS ───
+gf_sqli|cat <urls_file> | gf sqli 2>/dev/null | head -50|60|gf
+gf_xss|cat <urls_file> | gf xss 2>/dev/null | head -50|60|gf
+gf_ssrf|cat <urls_file> | gf ssrf 2>/dev/null | head -50|60|gf
+gf_redirect|cat <urls_file> | gf redirect 2>/dev/null | head -50|60|gf
+gf_lfi|cat <urls_file> | gf lfi 2>/dev/null | head -50|60|gf
+gf_rce|cat <urls_file> | gf rce 2>/dev/null | head -50|60|gf
+# ─── HTTP HEADERS ───
+curl_headers|curl -sI -L --max-time 10 <url>|30|tech
+curl_robots|curl -s --max-time 10 <url>/robots.txt|30|tech
+curl_sitemap|curl -s --max-time 10 <url>/sitemap.xml|30|tech
+# ─── SCREENSHOTS ───
+gowitness|gowitness single --screenshot-path <outdir>/screenshots <url> 2>/dev/null|120|screenshot
+# ─── DNS ───
+dig_any|dig +short ANY <domain>|30|dns
+dig_axfr|dig axfr @<domain> <domain>|60|dns
+dnsrecon|dnsrecon -d <domain> -t std 2>/dev/null|180|dns
+dnsenum|dnsenum <domain> --noreverse 2>/dev/null|180|dns
+fierce|fierce --domain <domain> 2>/dev/null|180|dns
+theharvester|theHarvester -d <domain> -b all -l 100 2>/dev/null|300|dns
+whois|whois <domain> 2>/dev/null|60|dns
+# ─── NUCLEI EXTRA ───
+nuclei_default|nuclei -u <url> -silent 2>/dev/null|600|nuclei
+nuclei_tech|nuclei -u <url> -tags tech -silent 2>/dev/null|300|nuclei
+nuclei_login|nuclei -u <url> -tags login -silent 2>/dev/null|300|nuclei
+nuclei_backup|nuclei -u <url> -tags backup -silent 2>/dev/null|300|nuclei
+nuclei_config|nuclei -u <url> -tags config -silent 2>/dev/null|300|nuclei
+nuclei_debug|nuclei -u <url> -tags debug -silent 2>/dev/null|300|nuclei
+# ─── SSL/TLS ───
+sslscan|sslscan <domain>:443 2>/dev/null|180|ssl
+testssl|testssl <domain>:443 2>/dev/null|300|ssl
+nmap_ssl|nmap --script ssl-enum-ciphers,ssl-heartbleed,ssl-poodle -p 443 <domain> 2>/dev/null|300|ssl
